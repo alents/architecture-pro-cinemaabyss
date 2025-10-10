@@ -31,6 +31,9 @@ app = FastAPI()
 
 app.state.movies_request_counter = 0
 
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 
 @app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 async def router(request: Request, full_path: str):
