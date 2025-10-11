@@ -18,11 +18,11 @@ spec:
               service:
                 name: proxy-service
                 port:
-                  number: 8000
+                  number: 8080
           - path: /api/events
             pathType: Prefix
             backend:
               service:
                 name: events-service
                 port:
-                  number: 8082
+                  number: 8080
