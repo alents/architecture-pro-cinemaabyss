@@ -31,7 +31,7 @@ app = FastAPI()
 
 app.state.movies_request_counter = 0
 
-@app.get("/health")
+@app.get("/api/proxy/health")
 async def health():
     return {"status": "ok"}
 
