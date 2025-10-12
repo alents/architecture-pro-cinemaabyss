@@ -5,7 +5,7 @@ global:
 
 # Image pull secrets
 imagePullSecrets:
-  dockerconfigjson: ewoJImF1dGhzIjogewoJCSJnaGNyLmlvIjogewoJCQkiYXV0aCI6
+  dockerconfigjson: ewoJImF1dGhzIjogewogICAgICAgICAgICJnaGNyLmlvIjogewogICAgICAgICAgICAgICJhdXRoIjogIllXeGxiblJ6T21kb2NGOXdXR1l5TkVscmJGWTRUVFZPVWpWcVRYVk1VVE4zTWtsdVoxaEhPVm93VUV0S01qUT0iCiAgICAgICAgICAgfQogICAgICAgIH0sCgkiY3JlZHNTdG9yZSI6ICJkZXNrdG9wIiwKCSJjdXJyZW50Q29udGV4dCI6ICJkZXNrdG9wLWxpbnV4IiwKCSJwbHVnaW5zIjogewoJCSJkZWJ1ZyI6IHsKCQkJImhvb2tzIjogImV4ZWMiCgkJfSwKCQkic2NvdXQiOiB7CgkJCSJob29rcyI6ICJwdWxsLGJ1aWxkeCBidWlsZCIKCQl9Cgl9LAoJImZlYXR1cmVzIjogewoJCSJob29rcyI6ICJ0cnVlIgoJfQp9
 # Database configuration
 database:
   host: postgres
@@ -33,7 +33,7 @@ database:
 monolith:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/monolith
+    repository: ghcr.io/alents/architecture-pro-cinemaabyss/monolith
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -53,7 +53,7 @@ monolith:
 proxyService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/proxy-service
+    repository: ghcr.io/alents/architecture-pro-cinemaabyss/proxy-service
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -65,15 +65,15 @@ proxyService:
       cpu: 100m
       memory: 128Mi
   service:
-    port: 80
-    targetPort: 8000
+    port: 8080
+    targetPort: 8080
     type: ClusterIP
 
 # Movies service configuration
 moviesService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/movies-service
+    repository: ghcr.io/alents/architecture-pro-cinemaabyss/movies-service
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -85,28 +85,28 @@ moviesService:
       cpu: 100m
       memory: 128Mi
   service:
-    port: 8081
-    targetPort: 8081
+    port: 8080
+    targetPort: 8080
     type: ClusterIP
 
 # Events service configuration
 eventsService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/events-service
+    repository: ghcr.io/alents/architecture-pro-cinemaabyss/events-service
     tag: latest
     pullPolicy: Always
   replicas: 1
   resources:
     limits:
-      cpu: 300m
-      memory: 256Mi
+      cpu: 800m
+      memory: 512Mi
     requests:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 800m
+      memory: 512Mi
   service:
-    port: 8082
-    targetPort: 8082
+    port: 8080
+    targetPort: 8080
     type: ClusterIP
 
 # Kafka configuration
@@ -172,11 +172,11 @@ ingress:
         - path: /
           pathType: Prefix
           service: proxy-service
-          port: 80
+          port: 8080
         - path: /api/events
           pathType: Prefix
           service: events-service
-          port: 8082
+          port: 8080
 
 # Application configuration
 config:
