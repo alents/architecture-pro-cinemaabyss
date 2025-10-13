@@ -1,0 +1,19 @@
+server.port: ${PORT}
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS}
+    consumer:
+      group-id: cinema-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    properties:
+        spring.json.trusted.packages: "ru.cinema.eventsservice.dto"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+
+  application:
+    name: events-service
+

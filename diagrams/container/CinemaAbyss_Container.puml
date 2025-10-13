@@ -1,0 +1,105 @@
+@startuml
+title Диаграмма контейнеров системы WarmHouse
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
+
+Person(user, "Клиент", "Пользователь системы")
+'System(CinemaAbyssSystem, "Система CinemaAbyss", "Агрегатор стриминговых сервисов Кинобездна (TO-BE)")
+
+System_Boundary(CinemaAbyssSystem, "CinemaAbyss System") {
+  ' Клиентские приложения
+  Container(WebApp, "WebApp", "", "Поиск и просмотр фильмов")
+  Container(MobileApp, "MobileApp", "", "Поиск и просмотр фильмов")
+  Container(SmartTVApp, "SmartTVApp", "", "Поиск и просмотр фильмов")
+
+  ' BFF
+  Container(BFFWeb, "BFF-Web", "Node.js", "Фасад для WebApp")
+  Container(BFFMobile, "BFF-Mobile", "Node.js", "Фасад для MobileApp")
+  Container(BFFSmartTV, "BFF-SmartTV", "Node.js", "Фасад для SmartTVApp")
+
+
+  ' Инфра
+  Container(ApiGateway, "ApiGateway", "Kong", "Маршрутизация REST-запросов между клиентами и микросервисами, логирование, rate limiting и аутентификация")
+  Container(AuthService, "AuthService", "SSO, Keycloak", "Аутентификация и авторизация")
+  Container(MessageBroker, "MessageBroker", "Kafka", "Передача событий между сервисами")
+
+  ' Доменные сервисы
+  Container(CatalogService, "CatalogService", "", "Просмотр каталога, получений информации о фильме, поиск, ссылки на медиа-контент")
+  Container(AggregatorService, "AggregatorService", "", "Синхронизация каталога с каталогами сторонних сервисов")
+  Container(RateService, "RateService", "", "Вычисляет агрегированный рейтинг (локальные пользователи + рейтинг на сервисах-партнерах))")
+  Container(UserService, "UserService", "", "Профиль пользователя, история просмотров, настройки, избранное, лайки, рейтинги")
+  Container(RecommendIntegService, "RecommendIntegrationService", "", "Интеграция с внешним сервисом рекомендаций, сбор статистики просмотров, лайки, рейтинг")
+  Container(SubscribeService, "SubscribeService", "", "Оформление, просмотр и проверка подписок")
+  Container(PaymentGate, "PaymentGate", "", "Интеграция с внешним платежным сервисом")
+
+  ' Хранилища
+  Container(CatalogRelDB, "Catalog Relational DB", "Postgres", "Хранит текущее представление каталога (мета-информация, рейтинги)")
+  Container(AggregatorServiceDB, "Aggregator Service DB", "Postgres", "Хранение выгрузок и агрегатов")
+  Container(RateServiceDB, "Rate Service DB", "Postgres", "Хранение данных для вычисления рейтинга")
+  Container(UserDB, "User DB", "Postgres", "Хранит профили пользователей, избранное, история просмотра, лайки, рейтинги")
+  Container(SubscribeServiceDB, "SubscribeServiceDB", "", "Хранит данные о подписках")
+  Container(PaymentGateDB, "PaymentGate DB", "Postgres", "Хранит данные о платежных транзакциях")
+  Container(CatalogES, "CatalogSearch", "Elastic Search", "Поисковый индекс")
+}
+
+' Внешние системы
+System_Ext(RecommendService, "Сервис рекомендаций", "")
+System_Ext(PaymentService, "Платёжная система")
+System_Ext(PartnerService, "Сторонние стриминоговые платформы")
+System_Ext(CDN, "CDN партнеров", "")
+
+' Взаимодействия клиентов
+Rel(user, WebApp, "Использует систему")
+Rel(user, MobileApp, "Использует систему")
+Rel(user, SmartTVApp, "Использует систему")
+
+Rel(WebApp, CDN, "Загружает видео/медиа", "")
+Rel(MobileApp, CDN, "Загружает видео/медиа", "")
+Rel(SmartTVApp, CDN, "Загружает видео/медиа", "")
+
+' Взаимодействия внутри системы
+Rel(WebApp, BFFWeb, "Делает запросы", "REST")
+Rel(MobileApp, BFFMobile, "Делает запросы", "GraphQL")
+Rel(SmartTVApp, BFFSmartTV, "Делает запросы", "REST")
+
+Rel(BFFWeb, ApiGateway, "Делает запросы к API", "REST")
+Rel(BFFMobile, ApiGateway, "Делает запросы к API", "REST")
+Rel(BFFSmartTV, ApiGateway, "Делает запросы к API", "REST")
+
+Rel(ApiGateway, AuthService, "Проксирует API-запросы", "REST")
+Rel(ApiGateway, CatalogService, "Проксирует API-запросы", "REST")
+Rel(ApiGateway, UserService, "Проксирует API-запросы", "REST")
+Rel(ApiGateway, SubscribeService, "Проксирует API-запросы", "REST")
+Rel(ApiGateway, PaymentGate, "Проксирует API-запросы", "REST")
+
+Rel(AggregatorService, PartnerService, "Запрашивает каталог, рейтинги фильмов")
+Rel(AggregatorService, MessageBroker, "Публикует события OnAggregated, OnLoadRates", "")
+Rel(AggregatorService, AggregatorServiceDB, "Запись/Чтение", "")
+
+Rel(CatalogService, MessageBroker, "Подписан на события OnAggregated, RateUpdated")
+Rel(CatalogService, CatalogRelDB, "Запрашивает данные/обновляет представления", "")
+Rel(CatalogService, CatalogES, "Поиск в каталоге", "")
+Rel(CatalogService, RecommendIntegService, "Получает рекомендации", "REST")
+Rel(CatalogService, SubscribeService, "Проверка подписки", "REST")
+
+Rel(RecommendIntegService, RecommendService, "Отправляет статистику, получает рекомендации", "REST", "REST")
+
+Rel(RateService, MessageBroker, "Публикует RateUpdated")
+Rel(RateService, MessageBroker, "Подписан на события UserRated, OnLoadRates, UserWatched,...", "")
+Rel(RateService, RateServiceDB, "Читает/записывает данные", "")
+
+Rel(UserService, MessageBroker, "Публикует события UserWatched, UserRated...")
+Rel(UserService, UserDB, "Читает/записывает данные", "")
+
+
+Rel(SubscribeService, SubscribeServiceDB, "Читает/записывает данные", "")
+Rel(SubscribeService, MessageBroker, "Подписан на OnPayed", "")
+
+Rel(PaymentGate, PaymentService, "Передает информацию о платежах", "REST")
+Rel(PaymentGate, MessageBroker, "Публикует событие OnPayed", "")
+Rel(PaymentGate, PaymentGateDB, "Читает/Записывает данные", "")
+
+
+@enduml
